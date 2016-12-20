@@ -3,47 +3,64 @@ package action
 import (
 	"encoding/json"
 	"encoding/xml"
-	"fmt"
+	"log"
 	"net/http"
 )
 
 type Wrapper func(Action) Action
 
+//Decorate allows you to do something with Action request and response
+//before or after is executed. For instance you can log, transform response,
+//monitor...
 func Decorate(a Action, ws ...Wrapper) http.Handler {
 	for _, wrapper := range ws {
 		a = wrapper(a)
 	}
 
-	return caller{
+	return Handler{
 		Action: a,
 	}
 }
 
-func JsonResponse(d bool) Wrapper {
+//JsonResponse takes action result and creates JSON HTTP response
+func JsonResponse() Wrapper {
 	return func(a Action) Action {
-		return ActionFunc(func(w http.ResponseWriter, r *http.Request) (interface{}, error) {
-			if d && r.Header.Get("content-type") == "" {
-				r.Header.Set("content-type", "application/json")
+		return ActionFunc(func(req *http.Request, res *Response) (interface{}, error) {
+			if req.Header.Get("accept") == "" {
+				req.Header.Set("accept", "application/json")
+			}
+			out, err := a.Do(req, res)
+			if err != nil {
+				return out, err
 			}
 
-			out, err := a.Do(w, r)
-			if r.Header.Get("content-type") == "application/json" {
-				json.NewEncoder(w).Encode(out)
+			if req.Header.Get("accept") == "application/json" {
+				res.Body, err = json.Marshal(out)
+				if err != nil {
+					//internal error
+					return out, err
+				}
+
+				res.Header.Set("content-type", "application/json")
 			}
 			return out, err
 		})
 	}
 }
 
+//XMLResponse takes action result and creates XML HTTP response
 func XMLResponse() Wrapper {
 	return func(a Action) Action {
-		return ActionFunc(func(w http.ResponseWriter, r *http.Request) (interface{}, error) {
-			out, err := a.Do(w, r)
-			if r.Header.Get("content-type") == "application/xml" {
-				if err := xml.NewEncoder(w).Encode(out); err != nil {
+		return ActionFunc(func(req *http.Request, res *Response) (interface{}, error) {
+			out, err := a.Do(req, res)
+			if err == nil && req.Header.Get("accept") == "application/xml" {
+				res.Body, err = xml.Marshal(out)
+				if err != nil {
 					return out, err
 				}
+				res.Header.Set("content-type", "application/xml")
 			}
+
 			return out, err
 		})
 	}
@@ -51,10 +68,11 @@ func XMLResponse() Wrapper {
 
 func Logger() Wrapper {
 	return func(a Action) Action {
-		return ActionFunc(func(w http.ResponseWriter, r *http.Request) (interface{}, error) {
-			fmt.Println("before")
-			out, err := a.Do(w, r)
-			fmt.Println("after")
+		return ActionFunc(func(req *http.Request, res *Response) (interface{}, error) {
+			out, err := a.Do(req, res)
+
+			log.Printf("header %s", res.Header)
+			log.Printf("body %s", res.Body)
 			return out, err
 		})
 	}
