@@ -9,7 +9,8 @@ import (
 
 func main() {
 
-	http.Handle("/convert", action.Decorate(convert.Action,
+	http.Handle("/convert", action.Decorate(
+		convert.Action,
 		action.XMLResponse(),
 		action.JsonResponse(),
 		action.Logger(),
