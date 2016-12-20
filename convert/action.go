@@ -81,7 +81,7 @@ func newConverter() action.Action {
 	//stream rates from fixer, new stream arrive in every 24hours.
 	//this reduce amount of calls to thirt part API
 	go func() {
-		fc, err := fixer.Stream(Base, time.Hour*60)
+		fc, err := fixer.Stream(Base, time.Hour*24)
 		if err != nil {
 			c.error = err
 			return
