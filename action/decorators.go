@@ -26,7 +26,8 @@ func Decorate(a Action, ws ...Wrapper) http.Handler {
 func JsonResponse() Wrapper {
 	return func(a Action) Action {
 		return ActionFunc(func(req *http.Request, res *Response) (interface{}, error) {
-			if req.Header.Get("accept") == "" {
+			acc := req.Header.Get("accept")
+			if acc != "application/xml" {
 				req.Header.Set("accept", "application/json")
 			}
 			out, err := a.Do(req, res)
