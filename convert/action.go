@@ -15,7 +15,7 @@ var Action action.Action = newConverter()
 
 const Base = "USD"
 
-type Result struct {
+type result struct {
 	Amount    string
 	Currency  string
 	Converted map[string]string
@@ -41,8 +41,8 @@ func (c *converterAction) Do(req *http.Request, res *action.Response) (interface
 }
 
 // Transform
-func (c *converterAction) transform(currency string, amount float64) (Result, error) {
-	o := Result{Converted: map[string]string{}}
+func (c *converterAction) transform(currency string, amount float64) (result, error) {
+	o := result{Converted: map[string]string{}}
 
 	if c.error != nil {
 		return o, c.error

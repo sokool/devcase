@@ -17,8 +17,8 @@ func Decorate(a Action, ws ...Wrapper) http.Handler {
 		a = wrapper(a)
 	}
 
-	return Handler{
-		Action: a,
+	return handler{
+		action: a,
 	}
 }
 

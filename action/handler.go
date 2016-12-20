@@ -2,17 +2,17 @@ package action
 
 import "net/http"
 
-type Handler struct {
-	Action Action
+type handler struct {
+	action Action
 }
 
-func (c Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	res := &Response{
 		Body:   []byte{},
 		Header: http.Header{},
 	}
 
-	_, err := c.Action.Do(r, res)
+	_, err := c.action.Do(r, res)
 
 	// handle errors
 	switch err.(type) {
